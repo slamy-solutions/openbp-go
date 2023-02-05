@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/redis/go-redis/v9 v9.0.2
-	github.com/rogpeppe/go-internal v1.9.0
 	go.mongodb.org/mongo-driver v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo v0.38.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.13.0
