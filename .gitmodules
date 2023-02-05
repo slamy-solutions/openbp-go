@@ -1,0 +1,3 @@
+[submodule "openbp"]
+	path = openbp
+	url = https://github.com/slamy-solutions/openbp
