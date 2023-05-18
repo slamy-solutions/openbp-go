@@ -42,26 +42,26 @@ type StubConfig struct {
 	keyValueStorage GrpcServiceConfig
 	actorUser       GrpcServiceConfig
 
-	iamAuthenticationPassword GrpcServiceConfig
-	iamIdentity               GrpcServiceConfig
-	iamAuth                   GrpcServiceConfig
-	iamPolicy                 GrpcServiceConfig
-	iamRole                   GrpcServiceConfig
-	iamToken                  GrpcServiceConfig
+	iamAuthentication GrpcServiceConfig
+	iamIdentity       GrpcServiceConfig
+	iamAuth           GrpcServiceConfig
+	iamPolicy         GrpcServiceConfig
+	iamRole           GrpcServiceConfig
+	iamToken          GrpcServiceConfig
 }
 
 func NewstubConfig() *StubConfig {
 	return &StubConfig{
-		logger:                    log.StandardLogger(),
-		namespace:                 NewGrpcServiceConfig(),
-		keyValueStorage:           NewGrpcServiceConfig(),
-		actorUser:                 NewGrpcServiceConfig(),
-		iamAuthenticationPassword: NewGrpcServiceConfig(),
-		iamIdentity:               NewGrpcServiceConfig(),
-		iamAuth:                   NewGrpcServiceConfig(),
-		iamPolicy:                 NewGrpcServiceConfig(),
-		iamRole:                   NewGrpcServiceConfig(),
-		iamToken:                  NewGrpcServiceConfig(),
+		logger:            log.StandardLogger(),
+		namespace:         NewGrpcServiceConfig(),
+		keyValueStorage:   NewGrpcServiceConfig(),
+		actorUser:         NewGrpcServiceConfig(),
+		iamAuthentication: NewGrpcServiceConfig(),
+		iamIdentity:       NewGrpcServiceConfig(),
+		iamAuth:           NewGrpcServiceConfig(),
+		iamPolicy:         NewGrpcServiceConfig(),
+		iamRole:           NewGrpcServiceConfig(),
+		iamToken:          NewGrpcServiceConfig(),
 	}
 }
 
@@ -106,11 +106,11 @@ func (sc *StubConfig) WithKeyValueStorageService(conf ...GrpcServiceConfig) *Stu
 	return sc
 }
 
-func (sc *StubConfig) WithIAMAuthenticationPasswordService(conf ...GrpcServiceConfig) *StubConfig {
+func (sc *StubConfig) WithIAMAuthenticationService(conf ...GrpcServiceConfig) *StubConfig {
 	if len(conf) != 0 {
-		sc.iamAuthenticationPassword = conf[0]
+		sc.iamAuthentication = conf[0]
 	} else {
-		sc.iamAuthenticationPassword = GrpcServiceConfig{
+		sc.iamAuthentication = GrpcServiceConfig{
 			enabled: true,
 			url:     getConfigEnv("NATIVE_IAM_AUTHENTICATION_PASSWORD_URL", "native_iam_authentication_password:80"),
 		}

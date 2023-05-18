@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func makeGrpcClient[T interface{}](clientFunction func(grpc.ClientConnInterface) T, address string, opts ...grpc.DialOption) (*grpc.ClientConn, T, error) {
+func makeGrpcDial(address string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	opts = append(
 		[]grpc.DialOption{
 			grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
@@ -20,7 +20,11 @@ func makeGrpcClient[T interface{}](clientFunction func(grpc.ClientConnInterface)
 		opts...,
 	)
 
-	dial, err := grpc.Dial(address, opts...)
+	return grpc.Dial(address, opts...)
+}
+
+func makeGrpcClient[T interface{}](clientFunction func(grpc.ClientConnInterface) T, address string, opts ...grpc.DialOption) (*grpc.ClientConn, T, error) {
+	dial, err := makeGrpcDial(address, opts...)
 	if err != nil {
 		var result T
 		return nil, result, err

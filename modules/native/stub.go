@@ -17,18 +17,22 @@ import (
 	"google.golang.org/grpc"
 )
 
+type IAMAuthenticationServices struct {
+	Password password.IAMAuthenticationPasswordServiceClient
+}
+
 type Stub struct {
 	Namespace       namespace.NamespaceServiceClient
 	KeyValueStorage keyvaluestorage.KeyValueStorageServiceClient
 
 	ActorUser user.ActorUserServiceClient
 
-	IAMAuthenticationPassword password.IAMAuthenticationPasswordServiceClient
-	IAMPolicy                 policy.IAMPolicyServiceClient
-	IAMRole                   role.IAMRoleServiceClient
-	IAMIdentity               identity.IAMIdentityServiceClient
-	IAMToken                  token.IAMTokenServiceClient
-	IAMAuth                   auth.IAMAuthServiceClient
+	IAMAuthentication IAMAuthenticationServices
+	IAMPolicy         policy.IAMPolicyServiceClient
+	IAMRole           role.IAMRoleServiceClient
+	IAMIdentity       identity.IAMIdentityServiceClient
+	IAMToken          token.IAMTokenServiceClient
+	IAMAuth           auth.IAMAuthServiceClient
 
 	log       *log.Logger
 	config    *StubConfig
@@ -91,12 +95,19 @@ func (s *Stub) Connect() error {
 		s.ActorUser = service
 	}
 
-	if s.config.iamAuthenticationPassword.enabled {
-		service, err := connectToService(s, password.NewIAMAuthenticationPasswordServiceClient, &s.config.iamAuthenticationPassword, "native_iam_authentication_password")
+	if s.config.iamAuthentication.enabled {
+		dial, err := makeGrpcDial(s.config.iamAuthentication.url)
 		if err != nil {
+			s.closeConnections()
+			s.log.Error("Error while connecting to the [native_iam_authentication] service: " + err.Error())
 			return err
 		}
-		s.IAMAuthenticationPassword = service
+		s.log.Info("Successfully connected to the [native_iam_authentication] service")
+		s.dials = append(s.dials, dial)
+
+		s.IAMAuthentication = IAMAuthenticationServices{
+			Password: password.NewIAMAuthenticationPasswordServiceClient(dial),
+		}
 	}
 
 	if s.config.iamIdentity.enabled {
