@@ -26,6 +26,10 @@ type OTelConfig struct {
 	ServiceVersion    string
 	ServiceInstanceID string
 }
+type VaultConfig struct {
+	Enabled bool
+	URL     string
+}
 
 func getConfigEnv(key string, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
@@ -55,6 +59,7 @@ type StubConfig struct {
 	Nats  NatsConfig
 	Db    DBConfig
 	OTel  OTelConfig
+	Vault VaultConfig
 }
 
 func (s *StubConfig) WithCache(config ...CacheConfig) *StubConfig {
@@ -102,6 +107,19 @@ func (s *StubConfig) WithOTel(config *OTelConfig) *StubConfig {
 	return s
 }
 
+func (s *StubConfig) WithVault(config ...VaultConfig) *StubConfig {
+	cfg := &VaultConfig{
+		Enabled: true,
+		URL:     getConfigEnv("SYSTEM_VAULT_URL", "system_vault:80"),
+	}
+	if len(config) > 0 {
+		cfg = &config[0]
+	}
+
+	s.Vault = *cfg
+	return s
+}
+
 func NewSystemStubConfig() *StubConfig {
 	return &StubConfig{
 		Cache: CacheConfig{
@@ -124,6 +142,10 @@ func NewSystemStubConfig() *StubConfig {
 			ServiceName:       "",
 			ServiceVersion:    "",
 			ServiceInstanceID: "",
+		},
+		Vault: VaultConfig{
+			Enabled: false,
+			URL:     "",
 		},
 	}
 }

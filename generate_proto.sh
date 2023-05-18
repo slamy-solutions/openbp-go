@@ -1,5 +1,11 @@
 export PATH="$PATH:$(go env GOPATH)/bin"
 
+### SYSTEM MODULE ###
+# vault
+echo "Generating proto for system_vault service"
+mkdir -p ./modules/system/proto/vault
+protoc --go_out=./modules/system/proto/vault --go_opt=paths=source_relative --go-grpc_out=./modules/system/proto/vault --go-grpc_opt=paths=source_relative -I ./openbp/modules/system/proto vault.proto
+
 ### NATIVE MODULE ###
 
 # namespace
