@@ -36,6 +36,8 @@ type ActorUserServiceClient interface {
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	// Get all users in the namespace.
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (ActorUserService_ListClient, error)
+	// Get total number of users inside namespace
+	Count(ctx context.Context, in *CountRequest, opts ...grpc.CallOption) (*CountResponse, error)
 	// Searches for user using some "matching" string. Much faster than find operation. Searches for matches in login/fullName/email.
 	// Matches may be not ideal and its not possible to predict how much users matched provided string.
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (ActorUserService_SearchClient, error)
@@ -51,7 +53,7 @@ func NewActorUserServiceClient(cc grpc.ClientConnInterface) ActorUserServiceClie
 
 func (c *actorUserServiceClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
 	out := new(CreateResponse)
-	err := c.cc.Invoke(ctx, "/native_actor_user.ActorUserService/Create", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/native_iam_actor_user.ActorUserService/Create", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +62,7 @@ func (c *actorUserServiceClient) Create(ctx context.Context, in *CreateRequest, 
 
 func (c *actorUserServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/native_actor_user.ActorUserService/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/native_iam_actor_user.ActorUserService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +71,7 @@ func (c *actorUserServiceClient) Get(ctx context.Context, in *GetRequest, opts .
 
 func (c *actorUserServiceClient) GetByLogin(ctx context.Context, in *GetByLoginRequest, opts ...grpc.CallOption) (*GetByLoginResponse, error) {
 	out := new(GetByLoginResponse)
-	err := c.cc.Invoke(ctx, "/native_actor_user.ActorUserService/GetByLogin", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/native_iam_actor_user.ActorUserService/GetByLogin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +80,7 @@ func (c *actorUserServiceClient) GetByLogin(ctx context.Context, in *GetByLoginR
 
 func (c *actorUserServiceClient) GetByIdentity(ctx context.Context, in *GetByIdentityRequest, opts ...grpc.CallOption) (*GetByIdentityResponse, error) {
 	out := new(GetByIdentityResponse)
-	err := c.cc.Invoke(ctx, "/native_actor_user.ActorUserService/GetByIdentity", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/native_iam_actor_user.ActorUserService/GetByIdentity", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +89,7 @@ func (c *actorUserServiceClient) GetByIdentity(ctx context.Context, in *GetByIde
 
 func (c *actorUserServiceClient) Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
 	out := new(UpdateResponse)
-	err := c.cc.Invoke(ctx, "/native_actor_user.ActorUserService/Update", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/native_iam_actor_user.ActorUserService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +98,7 @@ func (c *actorUserServiceClient) Update(ctx context.Context, in *UpdateRequest, 
 
 func (c *actorUserServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
 	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, "/native_actor_user.ActorUserService/Delete", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/native_iam_actor_user.ActorUserService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +106,7 @@ func (c *actorUserServiceClient) Delete(ctx context.Context, in *DeleteRequest, 
 }
 
 func (c *actorUserServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (ActorUserService_ListClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ActorUserService_ServiceDesc.Streams[0], "/native_actor_user.ActorUserService/List", opts...)
+	stream, err := c.cc.NewStream(ctx, &ActorUserService_ServiceDesc.Streams[0], "/native_iam_actor_user.ActorUserService/List", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -135,8 +137,17 @@ func (x *actorUserServiceListClient) Recv() (*ListResponse, error) {
 	return m, nil
 }
 
+func (c *actorUserServiceClient) Count(ctx context.Context, in *CountRequest, opts ...grpc.CallOption) (*CountResponse, error) {
+	out := new(CountResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_actor_user.ActorUserService/Count", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *actorUserServiceClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (ActorUserService_SearchClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ActorUserService_ServiceDesc.Streams[1], "/native_actor_user.ActorUserService/Search", opts...)
+	stream, err := c.cc.NewStream(ctx, &ActorUserService_ServiceDesc.Streams[1], "/native_iam_actor_user.ActorUserService/Search", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -185,6 +196,8 @@ type ActorUserServiceServer interface {
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	// Get all users in the namespace.
 	List(*ListRequest, ActorUserService_ListServer) error
+	// Get total number of users inside namespace
+	Count(context.Context, *CountRequest) (*CountResponse, error)
 	// Searches for user using some "matching" string. Much faster than find operation. Searches for matches in login/fullName/email.
 	// Matches may be not ideal and its not possible to predict how much users matched provided string.
 	Search(*SearchRequest, ActorUserService_SearchServer) error
@@ -216,6 +229,9 @@ func (UnimplementedActorUserServiceServer) Delete(context.Context, *DeleteReques
 func (UnimplementedActorUserServiceServer) List(*ListRequest, ActorUserService_ListServer) error {
 	return status.Errorf(codes.Unimplemented, "method List not implemented")
 }
+func (UnimplementedActorUserServiceServer) Count(context.Context, *CountRequest) (*CountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Count not implemented")
+}
 func (UnimplementedActorUserServiceServer) Search(*SearchRequest, ActorUserService_SearchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
@@ -242,7 +258,7 @@ func _ActorUserService_Create_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/native_actor_user.ActorUserService/Create",
+		FullMethod: "/native_iam_actor_user.ActorUserService/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ActorUserServiceServer).Create(ctx, req.(*CreateRequest))
@@ -260,7 +276,7 @@ func _ActorUserService_Get_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/native_actor_user.ActorUserService/Get",
+		FullMethod: "/native_iam_actor_user.ActorUserService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ActorUserServiceServer).Get(ctx, req.(*GetRequest))
@@ -278,7 +294,7 @@ func _ActorUserService_GetByLogin_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/native_actor_user.ActorUserService/GetByLogin",
+		FullMethod: "/native_iam_actor_user.ActorUserService/GetByLogin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ActorUserServiceServer).GetByLogin(ctx, req.(*GetByLoginRequest))
@@ -296,7 +312,7 @@ func _ActorUserService_GetByIdentity_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/native_actor_user.ActorUserService/GetByIdentity",
+		FullMethod: "/native_iam_actor_user.ActorUserService/GetByIdentity",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ActorUserServiceServer).GetByIdentity(ctx, req.(*GetByIdentityRequest))
@@ -314,7 +330,7 @@ func _ActorUserService_Update_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/native_actor_user.ActorUserService/Update",
+		FullMethod: "/native_iam_actor_user.ActorUserService/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ActorUserServiceServer).Update(ctx, req.(*UpdateRequest))
@@ -332,7 +348,7 @@ func _ActorUserService_Delete_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/native_actor_user.ActorUserService/Delete",
+		FullMethod: "/native_iam_actor_user.ActorUserService/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ActorUserServiceServer).Delete(ctx, req.(*DeleteRequest))
@@ -361,6 +377,24 @@ func (x *actorUserServiceListServer) Send(m *ListResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _ActorUserService_Count_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ActorUserServiceServer).Count(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_actor_user.ActorUserService/Count",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ActorUserServiceServer).Count(ctx, req.(*CountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ActorUserService_Search_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(SearchRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -386,7 +420,7 @@ func (x *actorUserServiceSearchServer) Send(m *SearchResponse) error {
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ActorUserService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "native_actor_user.ActorUserService",
+	ServiceName: "native_iam_actor_user.ActorUserService",
 	HandlerType: (*ActorUserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -412,6 +446,10 @@ var ActorUserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _ActorUserService_Delete_Handler,
+		},
+		{
+			MethodName: "Count",
+			Handler:    _ActorUserService_Count_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

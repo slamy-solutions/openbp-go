@@ -30,8 +30,14 @@ type IAMIdentityServiceClient interface {
 	Delete(ctx context.Context, in *DeleteIdentityRequest, opts ...grpc.CallOption) (*DeleteIdentityResponse, error)
 	// Check if identity exists
 	Exists(ctx context.Context, in *ExistsIdentityRequest, opts ...grpc.CallOption) (*ExistsIdentityResponse, error)
+	// Get list of the identities
+	List(ctx context.Context, in *ListIdentityRequest, opts ...grpc.CallOption) (IAMIdentityService_ListClient, error)
+	// Get number of the identities in the namespace
+	Count(ctx context.Context, in *CountIdentityRequest, opts ...grpc.CallOption) (*CountIdentityResponse, error)
 	// Get policy that is managed by service
 	GetServiceManagedIdentity(ctx context.Context, in *GetServiceManagedIdentityRequest, opts ...grpc.CallOption) (*GetServiceManagedIdentityResponse, error)
+	// Update identity information
+	Update(ctx context.Context, in *UpdateIdentityRequest, opts ...grpc.CallOption) (*UpdateIdentityResponse, error)
 	// Add policy to the identity. If policy was already added - does nothing.
 	AddPolicy(ctx context.Context, in *AddPolicyRequest, opts ...grpc.CallOption) (*AddPolicyResponse, error)
 	// Remove policy from the identity. If policy was already removed - does nothing.
@@ -88,9 +94,59 @@ func (c *iAMIdentityServiceClient) Exists(ctx context.Context, in *ExistsIdentit
 	return out, nil
 }
 
+func (c *iAMIdentityServiceClient) List(ctx context.Context, in *ListIdentityRequest, opts ...grpc.CallOption) (IAMIdentityService_ListClient, error) {
+	stream, err := c.cc.NewStream(ctx, &IAMIdentityService_ServiceDesc.Streams[0], "/native_iam_identity.IAMIdentityService/List", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &iAMIdentityServiceListClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type IAMIdentityService_ListClient interface {
+	Recv() (*ListIdentityResponse, error)
+	grpc.ClientStream
+}
+
+type iAMIdentityServiceListClient struct {
+	grpc.ClientStream
+}
+
+func (x *iAMIdentityServiceListClient) Recv() (*ListIdentityResponse, error) {
+	m := new(ListIdentityResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *iAMIdentityServiceClient) Count(ctx context.Context, in *CountIdentityRequest, opts ...grpc.CallOption) (*CountIdentityResponse, error) {
+	out := new(CountIdentityResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/Count", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *iAMIdentityServiceClient) GetServiceManagedIdentity(ctx context.Context, in *GetServiceManagedIdentityRequest, opts ...grpc.CallOption) (*GetServiceManagedIdentityResponse, error) {
 	out := new(GetServiceManagedIdentityResponse)
 	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/GetServiceManagedIdentity", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iAMIdentityServiceClient) Update(ctx context.Context, in *UpdateIdentityRequest, opts ...grpc.CallOption) (*UpdateIdentityResponse, error) {
+	out := new(UpdateIdentityResponse)
+	err := c.cc.Invoke(ctx, "/native_iam_identity.IAMIdentityService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -154,8 +210,14 @@ type IAMIdentityServiceServer interface {
 	Delete(context.Context, *DeleteIdentityRequest) (*DeleteIdentityResponse, error)
 	// Check if identity exists
 	Exists(context.Context, *ExistsIdentityRequest) (*ExistsIdentityResponse, error)
+	// Get list of the identities
+	List(*ListIdentityRequest, IAMIdentityService_ListServer) error
+	// Get number of the identities in the namespace
+	Count(context.Context, *CountIdentityRequest) (*CountIdentityResponse, error)
 	// Get policy that is managed by service
 	GetServiceManagedIdentity(context.Context, *GetServiceManagedIdentityRequest) (*GetServiceManagedIdentityResponse, error)
+	// Update identity information
+	Update(context.Context, *UpdateIdentityRequest) (*UpdateIdentityResponse, error)
 	// Add policy to the identity. If policy was already added - does nothing.
 	AddPolicy(context.Context, *AddPolicyRequest) (*AddPolicyResponse, error)
 	// Remove policy from the identity. If policy was already removed - does nothing.
@@ -185,8 +247,17 @@ func (UnimplementedIAMIdentityServiceServer) Delete(context.Context, *DeleteIden
 func (UnimplementedIAMIdentityServiceServer) Exists(context.Context, *ExistsIdentityRequest) (*ExistsIdentityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Exists not implemented")
 }
+func (UnimplementedIAMIdentityServiceServer) List(*ListIdentityRequest, IAMIdentityService_ListServer) error {
+	return status.Errorf(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedIAMIdentityServiceServer) Count(context.Context, *CountIdentityRequest) (*CountIdentityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Count not implemented")
+}
 func (UnimplementedIAMIdentityServiceServer) GetServiceManagedIdentity(context.Context, *GetServiceManagedIdentityRequest) (*GetServiceManagedIdentityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServiceManagedIdentity not implemented")
+}
+func (UnimplementedIAMIdentityServiceServer) Update(context.Context, *UpdateIdentityRequest) (*UpdateIdentityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedIAMIdentityServiceServer) AddPolicy(context.Context, *AddPolicyRequest) (*AddPolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPolicy not implemented")
@@ -288,6 +359,45 @@ func _IAMIdentityService_Exists_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IAMIdentityService_List_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListIdentityRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(IAMIdentityServiceServer).List(m, &iAMIdentityServiceListServer{stream})
+}
+
+type IAMIdentityService_ListServer interface {
+	Send(*ListIdentityResponse) error
+	grpc.ServerStream
+}
+
+type iAMIdentityServiceListServer struct {
+	grpc.ServerStream
+}
+
+func (x *iAMIdentityServiceListServer) Send(m *ListIdentityResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _IAMIdentityService_Count_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CountIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMIdentityServiceServer).Count(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_identity.IAMIdentityService/Count",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMIdentityServiceServer).Count(ctx, req.(*CountIdentityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IAMIdentityService_GetServiceManagedIdentity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetServiceManagedIdentityRequest)
 	if err := dec(in); err != nil {
@@ -302,6 +412,24 @@ func _IAMIdentityService_GetServiceManagedIdentity_Handler(srv interface{}, ctx 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IAMIdentityServiceServer).GetServiceManagedIdentity(ctx, req.(*GetServiceManagedIdentityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IAMIdentityService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMIdentityServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/native_iam_identity.IAMIdentityService/Update",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMIdentityServiceServer).Update(ctx, req.(*UpdateIdentityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -420,8 +548,16 @@ var IAMIdentityService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IAMIdentityService_Exists_Handler,
 		},
 		{
+			MethodName: "Count",
+			Handler:    _IAMIdentityService_Count_Handler,
+		},
+		{
 			MethodName: "GetServiceManagedIdentity",
 			Handler:    _IAMIdentityService_GetServiceManagedIdentity_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _IAMIdentityService_Update_Handler,
 		},
 		{
 			MethodName: "AddPolicy",
@@ -444,6 +580,12 @@ var IAMIdentityService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IAMIdentityService_SetActive_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "List",
+			Handler:       _IAMIdentityService_List_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "identity.proto",
 }

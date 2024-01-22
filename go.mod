@@ -1,6 +1,6 @@
 module github.com/slamy-solutions/openbp-go
 
-go 1.18
+go 1.21.4
 
 require (
 	github.com/redis/go-redis/v9 v9.0.2

@@ -40,28 +40,17 @@ type StubConfig struct {
 
 	namespace       GrpcServiceConfig
 	keyValueStorage GrpcServiceConfig
-	actorUser       GrpcServiceConfig
-
-	iamAuthentication GrpcServiceConfig
-	iamIdentity       GrpcServiceConfig
-	iamAuth           GrpcServiceConfig
-	iamPolicy         GrpcServiceConfig
-	iamRole           GrpcServiceConfig
-	iamToken          GrpcServiceConfig
+	iam             GrpcServiceConfig
+	storage         GrpcServiceConfig
 }
 
 func NewstubConfig() *StubConfig {
 	return &StubConfig{
-		logger:            log.StandardLogger(),
-		namespace:         NewGrpcServiceConfig(),
-		keyValueStorage:   NewGrpcServiceConfig(),
-		actorUser:         NewGrpcServiceConfig(),
-		iamAuthentication: NewGrpcServiceConfig(),
-		iamIdentity:       NewGrpcServiceConfig(),
-		iamAuth:           NewGrpcServiceConfig(),
-		iamPolicy:         NewGrpcServiceConfig(),
-		iamRole:           NewGrpcServiceConfig(),
-		iamToken:          NewGrpcServiceConfig(),
+		logger:          log.StandardLogger(),
+		namespace:       NewGrpcServiceConfig(),
+		keyValueStorage: NewGrpcServiceConfig(),
+		iam:             NewGrpcServiceConfig(),
+		storage:         NewGrpcServiceConfig(),
 	}
 }
 
@@ -70,13 +59,13 @@ func (sc *StubConfig) WithLogger(logger *log.Logger) *StubConfig {
 	return sc
 }
 
-func (sc *StubConfig) WithActorUserService(conf ...GrpcServiceConfig) *StubConfig {
+func (sc *StubConfig) WithIAMService(conf ...GrpcServiceConfig) *StubConfig {
 	if len(conf) != 0 {
-		sc.actorUser = conf[0]
+		sc.iam = conf[0]
 	} else {
-		sc.actorUser = GrpcServiceConfig{
+		sc.iam = GrpcServiceConfig{
 			enabled: true,
-			url:     getConfigEnv("NATIVE_ACTOR_USER_URL", "native_actor_user:80"),
+			url:     getConfigEnv("NATIVE_IAM_URL", "native_iam:80"),
 		}
 	}
 	return sc
@@ -106,73 +95,13 @@ func (sc *StubConfig) WithKeyValueStorageService(conf ...GrpcServiceConfig) *Stu
 	return sc
 }
 
-func (sc *StubConfig) WithIAMAuthenticationService(conf ...GrpcServiceConfig) *StubConfig {
+func (sc *StubConfig) WithStorageService(conf ...GrpcServiceConfig) *StubConfig {
 	if len(conf) != 0 {
-		sc.iamAuthentication = conf[0]
+		sc.storage = conf[0]
 	} else {
-		sc.iamAuthentication = GrpcServiceConfig{
+		sc.storage = GrpcServiceConfig{
 			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_AUTHENTICATION_PASSWORD_URL", "native_iam_authentication_password:80"),
-		}
-	}
-	return sc
-}
-
-func (sc *StubConfig) WithIAMIdentityService(conf ...GrpcServiceConfig) *StubConfig {
-	if len(conf) != 0 {
-		sc.iamIdentity = conf[0]
-	} else {
-		sc.iamIdentity = GrpcServiceConfig{
-			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_IDENTITY_URL", "native_iam_identity:80"),
-		}
-	}
-	return sc
-}
-
-func (sc *StubConfig) WithIAMPolicyService(conf ...GrpcServiceConfig) *StubConfig {
-	if len(conf) != 0 {
-		sc.iamPolicy = conf[0]
-	} else {
-		sc.iamPolicy = GrpcServiceConfig{
-			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_POLICY_URL", "native_iam_policy:80"),
-		}
-	}
-	return sc
-}
-
-func (sc *StubConfig) WithIAMRoleService(conf ...GrpcServiceConfig) *StubConfig {
-	if len(conf) != 0 {
-		sc.iamRole = conf[0]
-	} else {
-		sc.iamRole = GrpcServiceConfig{
-			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_ROLE_URL", "native_iam_role:80"),
-		}
-	}
-	return sc
-}
-
-func (sc *StubConfig) WithIAMTokenService(conf ...GrpcServiceConfig) *StubConfig {
-	if len(conf) != 0 {
-		sc.iamToken = conf[0]
-	} else {
-		sc.iamToken = GrpcServiceConfig{
-			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_TOKEN_URL", "native_iam_token:80"),
-		}
-	}
-	return sc
-}
-
-func (sc *StubConfig) WithIAMAuthService(conf ...GrpcServiceConfig) *StubConfig {
-	if len(conf) != 0 {
-		sc.iamAuth = conf[0]
-	} else {
-		sc.iamAuth = GrpcServiceConfig{
-			enabled: true,
-			url:     getConfigEnv("NATIVE_IAM_AUTH_URL", "native_iam_auth:80"),
+			url:     getConfigEnv("NATIVE_STORAGE_URL", "native_storage:80"),
 		}
 	}
 	return sc

@@ -4,9 +4,11 @@ import (
 	"sync"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/slamy-solutions/openbp-go/modules/native/proto/actor/user"
+	"github.com/slamy-solutions/openbp-go/modules/native/proto/iam/actor/user"
 	"github.com/slamy-solutions/openbp-go/modules/native/proto/iam/auth"
+	"github.com/slamy-solutions/openbp-go/modules/native/proto/iam/authentication/oauth2"
 	"github.com/slamy-solutions/openbp-go/modules/native/proto/iam/authentication/password"
+	"github.com/slamy-solutions/openbp-go/modules/native/proto/iam/authentication/x509"
 	"github.com/slamy-solutions/openbp-go/modules/native/proto/iam/identity"
 	"github.com/slamy-solutions/openbp-go/modules/native/proto/iam/policy"
 	"github.com/slamy-solutions/openbp-go/modules/native/proto/iam/role"
@@ -14,25 +16,47 @@ import (
 	"github.com/slamy-solutions/openbp-go/modules/native/proto/keyvaluestorage"
 	"github.com/slamy-solutions/openbp-go/modules/native/proto/namespace"
 
+	"github.com/slamy-solutions/openbp-go/modules/native/proto/storage/bucket"
+	"github.com/slamy-solutions/openbp-go/modules/native/proto/storage/fs"
+
 	"google.golang.org/grpc"
 )
 
-type IAMAuthenticationServices struct {
+type IamActorServices struct {
+	User user.ActorUserServiceClient
+}
+
+type IamAuthenticationServices struct {
 	Password password.IAMAuthenticationPasswordServiceClient
+	X509     x509.IAMAuthenticationX509ServiceClient
+	OAuth    IamAuthenticationOAuthServices
+}
+
+type IamAuthenticationOAuthServices struct {
+	Config oauth2.IAMAuthenticationOAuth2ConfigServiceClient
+	OAuth2 oauth2.IAMAuthenticationOAuth2ServiceClient
+}
+
+type IAMService struct {
+	Actor          *IamActorServices
+	Authentication *IamAuthenticationServices
+	Identity       identity.IAMIdentityServiceClient
+	Auth           auth.IAMAuthServiceClient
+	Policy         policy.IAMPolicyServiceClient
+	Role           role.IAMRoleServiceClient
+	Token          token.IAMTokenServiceClient
+}
+
+type StorageService struct {
+	Bucket bucket.BucketServiceClient
+	FS     fs.FSServiceClient
 }
 
 type Stub struct {
 	Namespace       namespace.NamespaceServiceClient
 	KeyValueStorage keyvaluestorage.KeyValueStorageServiceClient
-
-	ActorUser user.ActorUserServiceClient
-
-	IAMAuthentication IAMAuthenticationServices
-	IAMPolicy         policy.IAMPolicyServiceClient
-	IAMRole           role.IAMRoleServiceClient
-	IAMIdentity       identity.IAMIdentityServiceClient
-	IAMToken          token.IAMTokenServiceClient
-	IAMAuth           auth.IAMAuthServiceClient
+	IAM             IAMService
+	Storage         StorageService
 
 	log       *log.Logger
 	config    *StubConfig
@@ -87,67 +111,50 @@ func (s *Stub) Connect() error {
 		s.KeyValueStorage = service
 	}
 
-	if s.config.actorUser.enabled {
-		service, err := connectToService(s, user.NewActorUserServiceClient, &s.config.actorUser, "native_actor_user")
-		if err != nil {
-			return err
-		}
-		s.ActorUser = service
-	}
-
-	if s.config.iamAuthentication.enabled {
-		dial, err := makeGrpcDial(s.config.iamAuthentication.url)
+	if s.config.iam.enabled {
+		dial, err := makeGrpcDial(s.config.iam.url)
 		if err != nil {
 			s.closeConnections()
-			s.log.Error("Error while connecting to the [native_iam_authentication] service: " + err.Error())
+			s.log.Error("Error while connecting to the [native_iam] service: " + err.Error())
 			return err
 		}
-		s.log.Info("Successfully connected to the [native_iam_authentication] service")
+		s.log.Info("Successfully connected to the [native_iam] service")
 		s.dials = append(s.dials, dial)
 
-		s.IAMAuthentication = IAMAuthenticationServices{
-			Password: password.NewIAMAuthenticationPasswordServiceClient(dial),
+		s.IAM = IAMService{
+			Actor: &IamActorServices{
+				User: user.NewActorUserServiceClient(dial),
+			},
+			Authentication: &IamAuthenticationServices{
+				Password: password.NewIAMAuthenticationPasswordServiceClient(dial),
+				X509:     x509.NewIAMAuthenticationX509ServiceClient(dial),
+				OAuth: IamAuthenticationOAuthServices{
+					Config: oauth2.NewIAMAuthenticationOAuth2ConfigServiceClient(dial),
+					OAuth2: oauth2.NewIAMAuthenticationOAuth2ServiceClient(dial),
+				},
+			},
+			Identity: identity.NewIAMIdentityServiceClient(dial),
+			Auth:     auth.NewIAMAuthServiceClient(dial),
+			Policy:   policy.NewIAMPolicyServiceClient(dial),
+			Role:     role.NewIAMRoleServiceClient(dial),
+			Token:    token.NewIAMTokenServiceClient(dial),
 		}
 	}
 
-	if s.config.iamIdentity.enabled {
-		service, err := connectToService(s, identity.NewIAMIdentityServiceClient, &s.config.iamIdentity, "native_iam_identity")
+	if s.config.storage.enabled {
+		dial, err := makeGrpcDial(s.config.storage.url)
 		if err != nil {
+			s.closeConnections()
+			s.log.Error("Error while connecting to the [native_storage] service: " + err.Error())
 			return err
 		}
-		s.IAMIdentity = service
-	}
+		s.log.Info("Successfully connected to the [native_storage] service")
+		s.dials = append(s.dials, dial)
 
-	if s.config.iamPolicy.enabled {
-		service, err := connectToService(s, policy.NewIAMPolicyServiceClient, &s.config.iamPolicy, "native_iam_policy")
-		if err != nil {
-			return err
+		s.Storage = StorageService{
+			Bucket: bucket.NewBucketServiceClient(dial),
+			FS:     fs.NewFSServiceClient(dial),
 		}
-		s.IAMPolicy = service
-	}
-
-	if s.config.iamRole.enabled {
-		service, err := connectToService(s, role.NewIAMRoleServiceClient, &s.config.iamRole, "native_iam_role")
-		if err != nil {
-			return err
-		}
-		s.IAMRole = service
-	}
-
-	if s.config.iamAuth.enabled {
-		service, err := connectToService(s, auth.NewIAMAuthServiceClient, &s.config.iamAuth, "native_iam_auth")
-		if err != nil {
-			return err
-		}
-		s.IAMAuth = service
-	}
-
-	if s.config.iamToken.enabled {
-		service, err := connectToService(s, token.NewIAMTokenServiceClient, &s.config.iamToken, "native_iam_token")
-		if err != nil {
-			return err
-		}
-		s.IAMToken = service
 	}
 
 	s.connected = true
